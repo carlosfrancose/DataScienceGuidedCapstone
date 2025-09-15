@@ -136,3 +136,7 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+# Anaconda requirements and project files
+requirements.txt
+anaconda_projects/
