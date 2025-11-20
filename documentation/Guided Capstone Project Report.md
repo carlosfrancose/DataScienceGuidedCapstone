@@ -1,4 +1,7 @@
 # Guided Capstone Project Report
+
+
+
 ## Overview
 ### Context
 Big Mountain Resort, a ski resort in Montana, currently prices their tickets based on market averages. While this serves as a good baseline, without a data-driven understanding of resort pricing, they risk leaving money on the table. To address this problem, Big Mountain Ski Resort has collected a rich dataset on the various ski resorts across the United States. This dataset contains key insights on the various facilities and features each resort offers, giving us a great opportunity to identify potential correlations with ticket prices. The hope is that a more refined look at these relationships can help evaluate Big Mountain's pricing strategy, and determine if operational changes can be made to increase revenue or reduce maintenance costs.
@@ -8,6 +11,8 @@ How can Big Mountain Resort accurately predict ski lift ticket prices based on a
 
 ### Objective
 Utilizing the dataset collected by Big Mountain Resort, we'll develop a regression model that takes various resort facilities and targets (weekend) ticket prices as a prediction.
+
+---
 
 ## Data
 ### Data Wrangling
@@ -45,7 +50,7 @@ The raw dataset provided by Big Mountain Resort has a total of 330 entries, with
 
 Initial data cleaning efforts resulted in dropping 2 columns, and 53 rows. The first column, *fastEight*, was nearly half null values, while the majority of the non-null values had an entry of zero. Thus this column was determined to be too sparce to include. The second column, *AdultWeekday*, was dropped as a result of determining *AdultWeekend* to be a better target. This conclusion came after evaluating the differences in the weekday and weekend ticket prices for all entries and finding that for the vast majority of cases both ticket prices were the same, with resorts on the lower end of pricing being the only ones to show any significant difference. Additionally, *AdultWeekend* contained slightly fewer missing entries than *AdultWeekday*.
 
-[INSERT FIGURE 1]
+![Figure 1: AdultWeekday vs. AdultWeekend](../images/figure1.png)
 
 The vast majority of rows removed were removed simply for having a null *AdultWeekend* entry. One additional row was removed as it was determined that based on *yearsOpen* that it was most likely an erroneous entry. The resulting dataset after wrangling has 25 columns, 277 rows, and is primed for further exploratory analysis. 
 
@@ -62,11 +67,14 @@ Following the brief data cleaning, we began our exploratory data analysis with a
 
 The histograms for both for resorts per state's 100k capita and 100k square miles show pretty strongly right skewed histograms:
 
-[INSERT FIGURE 2 AND 3]
+<p>
+  <img src="../images/figure2.png" width="48%" />
+  <img src="../images/figure3.png" width="48%" />
+</p>
 
 While the histogram for distribution of state average prices appears to be somewhat bimodal:
 
-[INSERT FIGURE 4]
+![Figure 4: Distribution of state averaged prices](../images/figure4.png)
 
 This seems to imply slightly differentiable classes of states. The first two figures on resort density seem to be indicative of some 6 or so states that contain well above average amounts of ski resorts, both in population density and land. The mean distribution seems to also show a split in ticket pricing, this time with two peaks implying a significant number of states command a higher average price, irregardless of land mass or population density. Were I conducting this EDA on my own, I would be interested in exploring this further, identifying which states seem to be the outliers for each of these scenarios. However, the guided notebook seems to go in a slightly different direction.
 
@@ -75,7 +83,7 @@ Per the guided notebook's instructions, we conducted a primary component analysi
 #### Target Feature & Correlations
 I've read online that it's recommended to start EDA with an in depth target feature analysis. While the guided notebook opted for a state analysis instead, we do get around to creating some real informative visualizations with a correlation heatmap and a large multi-scatterplot figure with each numerical feature.
 
-[INSERT FIGURE 5]
+![Figure 5: Correlation heatmap](../images/figure5.png)
 
 This heatmap provides arguably the most significant insights from the entire EDA notebook, as the features we see with strong correlation to the target feature *AdultWeekend* here prove to be the same features we select during our modeling process later. Some of these features include:
 - *vertical_drop*
@@ -85,13 +93,13 @@ This heatmap provides arguably the most significant insights from the entire EDA
 
 Interestingly, *fastQuads* stood out for having a much stronger correlation than one might initially assume, even stronger than the similar feature *total_chairs*. We later explored this comparison briefly near the end of the notebook by comparing both features in ratios with *Runs* and *SkiableTerrain_ac*.
 
-[INSERT FIGURE 7]
+![Figure 7: FastQuads ratios vs. total_chairs ratios](../images/figure7.png)
 
 My initial interpretation of these graphs led me to believe that *total_chairs* provided a more realistic spread of how chairlifts affects ticket prices. However, we would later find in the **preprocessing** phase that again, *fastQuads* has noticeably more significance in ticket price prediction than *total_chairs*. Now looking at these scatterplots in hindsight, my hypothesis is that *fastQuads* shows more deterministic split between resorts with no fast quad lifts and resorts with fast quad lifts, both in at noticeably differentiable ticket price ranges.
 
 To further evaluate ticket pricing spread across all of our numerical features, we created a scatterplot for each feature:
 
-[INSERT FIGURE 6]
+![Figure 6: Ticket price scatterplots](../images/figure6.png)
 
 The majority of these relationships appear to be nonlinear, with exception to some of the features with high correlation such as *vertical_drop*, *Runs*, *Snow Making_ac*, and, again, even *fastQuads*, each showing clear positive trends with ticket price. Some features such as  *resorts_per_100kcapita* and *resorts_per_100ksq_mile* interestingly show a bit of a horizontal convergence, suggesting that as a state's number of resorts increase, price becomes more deterministic.
 
@@ -116,6 +124,8 @@ A 70/30 train-test split was applied to create a reliable method of validation f
 
 It's worth noting that scaling the data is typically part of preprocessing, and while we did scale our data for the linear regression model we would test, ultimately our hyperparameter testing revealed that our final random forest model performed better with no scaling when compared to using `StandardScaler()`.
 
+---
+
 ## Model
 ### Baseline Model & Evaluation Metrics
 A DummyRegressor using the mean of the training labels was included to establish a baseline level of performance. This model produced an MAE of roughly **$19.14**, helping ground our expectations for what constituted meaningful improvement.
@@ -135,6 +145,7 @@ Between the two optimized models, the **Random Forest Regressor** demonstrated t
 ### Scenario Modeling
 To translate the model predictions into actionable measures, we created a custom scenario modeling function that applies the finalized Random Forest pipeline to a modified version of Big Mountain Resort, with new specified parameters (such as altering vertical drop or adding snowmaking acreage). This function returns the difference between the hypothetical scenario's predicted price and the current predicted price, allowing us to isolate the effect of individual operational changes while keeping all other features constant, creating an ideal playground for analysts.
 
+---
 
 ## Results
 ### Model Prediction
@@ -158,6 +169,7 @@ Closing down the resort's least used runs, from -1 to -10.
 |8|–1.26|
 |9|–1.71|
 |10|–1.81|
+
 Strangely, the model predicts that removing 1 run should have no effect on ticket price. It's worth considering that the nature of tree-based models such as Random Forests is to make "piecewise" predictions, meaning that the difference of 1 run likely just didn't create a significant enough difference to the model for it to change its prediction. It's safe to assume that any removal of a run would cause some level of price decrease, but in order to get a more accurate prediction on the removal of one run (or more), we likely need a bit more data granularity.
 
 #### Scenario 2
@@ -199,6 +211,8 @@ The validity of the model's output is dependent on several assumptions:
 
 Additionally, the model currently does not account for potentially critical sources of data such as annual attendance, customer satisfaction, or operational costs. Any of these sources of data could significantly strengthen of our model's predictions, and the model's inability to account for these in its current state must be considered.
 
+---
+
 ## Next Steps
 ### Deployment
 To make our Random Forest model more accessible to Big Mountain Resort's analytics team, we could integrate our pipeline into their internal applications or dashboards by deploying it as serialized object served through an internal API, or schedule it as a batch process that feeds predictions into their existing data warehouse or reporting tools.
@@ -207,7 +221,6 @@ To make our Random Forest model more accessible to Big Mountain Resort's analyti
 The scenario modeling function we developed offers a flexible tool for future analytical endeavors. Incorporating this function into our deployment would allow for analysts to explore different operational cost-benefit tradeoffs. If we manage to include richer data sources, like annual attendance, regional demand, or even operational costs, we can consolidate a dependable, robust decision-support system with far more comprehensive analysis for Big Mountain Resort's future projects.
 
 ## Conclusion
-### Summary 
 This project was a comprehensive application of the ML lifecycle to evaluate Big Mountain Resort's ticket pricing strategy, deriving a baseline model built to predict any American ski resort's ski lift ticket prices based on the resorts physical attributes and operational amenities. Additionally, we were able to establish a rudimentary function for applying hypothetical parameter changes, reflecting potential changes in ticket pricing that may occur as a result of Big Mountain's renovations.
 
 Extensive EDA and model behavior allows us to conclude that the park's number of runs, vertical drop, snow making acreage, and number of available ski lifts (particularly fast quads) all have some significant contribution to ticket pricing. Furthermore, our model predicts that even with all current amenities unchanged, Big Mountain Resort is likely underpricing its current pricing by at least **$4.48**.
